@@ -1,6 +1,6 @@
-# /genie-05-gold-dlt
+# /genie-06-gold-dlt
 
-**Purpose:** Generate the Gold layer DLT notebook covering both **per-dataset** aggregates (`datasets[*].gold_aggregates`) and **cross-dataset** unions (`cross_dataset_gold`).
+**Purpose:** Generate the Gold (KPI) layer DLT notebook covering both **per-dataset** aggregates (`datasets[*].gold_aggregates`) and **cross-dataset** unions (`cross_dataset_gold`). Reads `silver.silver_<dataset>` produced by `/genie-05-silver-dlt`.
 
 **Reads:** `genie_accelerator/metadata/datasets.yaml` → `datasets[*].gold_aggregates`, `cross_dataset_gold`
 
@@ -12,7 +12,7 @@
 You are generating a Lakeflow DLT Gold notebook.
 
 INPUT: genie_accelerator/metadata/datasets.yaml
-OUTPUT: notebooks/gold/04_gold_dlt.py
+OUTPUT: notebooks/gold/06_gold_dlt.py
 
 PART A — Per-dataset gold tables
 For EACH dataset and EACH entry in dataset.gold_aggregates:

@@ -1,6 +1,6 @@
-# /genie-03-bronze-dlt
+# /genie-04-bronze-dlt
 
-**Purpose:** Generate a Lakeflow DLT notebook that reads each `landing.raw_<dataset>` table, casts to typed columns per the metadata `columns` block, applies the metadata `quality` expectations, and writes `bronze.bronze_<dataset>`.
+**Purpose:** Generate a Lakeflow DLT notebook that reads each `bronze.raw_<dataset>` table (produced by `/genie-03-landing-ingest`), casts to typed columns per the metadata `columns` block, applies the metadata `quality` expectations, and writes `bronze.bronze_<dataset>`.
 
 **Reads:** `genie_accelerator/metadata/datasets.yaml` → `datasets[*].columns`, `datasets[*].quality`
 
@@ -12,14 +12,14 @@
 You are generating a Lakeflow Delta Live Tables (DLT) Bronze notebook.
 
 INPUT: genie_accelerator/metadata/datasets.yaml
-OUTPUT: One Python notebook: notebooks/bronze/02_bronze_dlt.py
+OUTPUT: One Python notebook: notebooks/bronze/04_bronze_dlt.py
 
 For EACH dataset in {{datasets}} (resolve same_schema_as references first):
 
-  1. Define a streaming view reading landing:
+  1. Define a streaming view reading the raw bronze table:
        @dlt.view(name="vw_raw_{{dataset.name}}")
        def vw_raw_{{dataset.name}}():
-           return spark.readStream.table("{{catalog}}.landing.raw_{{dataset.name}}")
+           return spark.readStream.table("{{catalog}}.bronze.raw_{{dataset.name}}")
 
   2. Define the bronze streaming table with typed projection.
      Build the SELECT list from {{dataset.columns}}:
@@ -58,4 +58,4 @@ CONSTRAINTS:
 
 - DLT pipeline runs green; `event_log` shows `flow_progress` for every `bronze_*` table.
 - `SELECT * FROM event_log(...) WHERE event_type='flow_progress'` shows 0 `failed_records` for `expect_or_fail` rules.
-- Row counts: bronze ≤ landing (drops applied).
+- Row counts: bronze ≤ raw bronze (drops applied).

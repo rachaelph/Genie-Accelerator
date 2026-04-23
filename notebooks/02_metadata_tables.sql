@@ -1,12 +1,12 @@
 -- Databricks notebook source
 -- MAGIC %md
--- MAGIC # 07 — Metadata Tables
+-- MAGIC # 02 — Metadata Tables
 -- MAGIC
 -- MAGIC Provisions the four configuration metadata tables in `kpi_testing.metadata`,
 -- MAGIC mirroring the schema of the parent ISD-Data-Accelerator so its batch engine
 -- MAGIC and agent queries port over with minimal change. Idempotent — safe to re-run.
 -- MAGIC
--- MAGIC Generated from `/genie-07-metadata-tables`. Requires `/genie-01-deploy-catalog`
+-- MAGIC Generated from `/genie-02-metadata-tables`. Requires `/genie-01-deploy-catalog`
 -- MAGIC to have run first (creates the catalog + `metadata` schema).
 
 -- COMMAND ----------

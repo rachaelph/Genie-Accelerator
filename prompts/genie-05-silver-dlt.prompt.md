@@ -1,6 +1,6 @@
-# /genie-04-silver-dlt
+# /genie-05-silver-dlt
 
-**Purpose:** Generate a Lakeflow DLT notebook for the Silver layer that deduplicates by `primary_key`, applies the metadata-defined `silver_transforms`, and writes `silver.silver_<dataset>`.
+**Purpose:** Generate a Lakeflow DLT notebook for the Silver layer that reads `bronze.bronze_<dataset>` (from `/genie-04-bronze-dlt`), deduplicates by `primary_key`, applies the metadata-defined `silver_transforms`, and writes `silver.silver_<dataset>` (cleaned data).
 
 **Reads:** `genie_accelerator/metadata/datasets.yaml` → `datasets[*].primary_key`, `datasets[*].silver_transforms`
 
@@ -12,7 +12,7 @@
 You are generating a Lakeflow DLT Silver notebook.
 
 INPUT: genie_accelerator/metadata/datasets.yaml
-OUTPUT: notebooks/silver/03_silver_dlt.py
+OUTPUT: notebooks/silver/05_silver_dlt.py
 
 For EACH dataset:
 

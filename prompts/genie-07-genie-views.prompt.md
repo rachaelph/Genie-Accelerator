@@ -1,6 +1,6 @@
-# /genie-06-genie-views
+# /genie-07-genie-views
 
-**Purpose:** Generate the Genie-consumption SQL views in `gold` (could equally live in a `business_metrics` schema). Every view and every column must carry a business-friendly `COMMENT` so the Genie agent can reason over them.
+**Purpose:** Validate the gold KPI tables and expose them via Genie-consumption SQL views in `gold` (could equally live in a `business_metrics` schema). Every view and every column must carry a business-friendly `COMMENT` so the Genie agent can reason over them. Run after `/genie-06-gold-dlt`.
 
 **Reads:** `genie_accelerator/metadata/datasets.yaml` → `genie_views`
 
@@ -12,7 +12,7 @@
 You are generating SQL views optimized for a Databricks Genie agent.
 
 INPUT: genie_accelerator/metadata/datasets.yaml
-OUTPUT: notebooks/views/05_genie_views.sql
+OUTPUT: notebooks/views/07_genie_views.sql
 
 For EACH entry in {{genie_views}}:
 

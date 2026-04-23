@@ -15,13 +15,13 @@ Metadata-driven scaffold mirroring the parent ISD Data Accelerator pattern, but 
 
 | Stage | Command | Output |
 |---|---|---|
-| 1. Deploy catalog | [genie-01-deploy-catalog](prompts/genie-01-deploy-catalog.prompt.md) | UC catalog `kpi_testing`, 5 schemas, landing volume |
-| 2. Land CSVs      | [genie-02-landing-ingest](prompts/genie-02-landing-ingest.prompt.md) | Auto Loader notebook per dataset → `landing.raw_*` |
-| 3. Bronze DLT     | [genie-03-bronze-dlt](prompts/genie-03-bronze-dlt.prompt.md)         | Typed + expectations → `bronze.bronze_*` |
-| 4. Silver DLT     | [genie-04-silver-dlt](prompts/genie-04-silver-dlt.prompt.md)         | SCD1 dedup + transforms → `silver.silver_*` |
-| 5. Gold DLT       | [genie-05-gold-dlt](prompts/genie-05-gold-dlt.prompt.md)             | Per-dataset + cross-dataset aggregates → `gold.gold_*` |
-| 6. Genie views    | [genie-06-genie-views](prompts/genie-06-genie-views.prompt.md)       | Commented `gold.vw_*` views for the Genie space |
-| 7. Metadata tables | [genie-07-metadata-tables](prompts/genie-07-metadata-tables.prompt.md) | 4 config tables in `metadata.*` mirroring the ISD parent (Datastore_Configuration + Orchestration / Primary / Advanced Configuration) |
+| 1. Deploy catalog   | [genie-01-deploy-catalog](prompts/genie-01-deploy-catalog.prompt.md)     | UC catalog `kpi_testing`, 5 schemas, landing volume |
+| 2. Metadata tables  | [genie-02-metadata-tables](prompts/genie-02-metadata-tables.prompt.md)   | 4 config tables in `metadata.*` (Datastore + Orchestration / Primary / Advanced) |
+| 3. Land CSVs        | [genie-03-landing-ingest](prompts/genie-03-landing-ingest.prompt.md)     | Auto Loader notebook per dataset → `bronze.raw_*` (raw data) |
+| 4. Bronze DLT       | [genie-04-bronze-dlt](prompts/genie-04-bronze-dlt.prompt.md)             | Typed + expectations → `bronze.bronze_*` |
+| 5. Silver DLT       | [genie-05-silver-dlt](prompts/genie-05-silver-dlt.prompt.md)             | SCD1 dedup + transforms → `silver.silver_*` (cleaned data) |
+| 6. Gold DLT         | [genie-06-gold-dlt](prompts/genie-06-gold-dlt.prompt.md)                 | Per-dataset + cross-dataset KPI aggregates → `gold.gold_*` |
+| 7. Genie views      | [genie-07-genie-views](prompts/genie-07-genie-views.prompt.md)           | Validation + commented `gold.vw_*` views for the Genie space |
 
 ## Datasets in scope (from `sample_data/`, excluding `apartments-train.csv`)
 
@@ -41,7 +41,7 @@ code genie_accelerator/metadata/datasets.yaml
 # 2. Validate
 python genie_accelerator/validate_metadata.py
 
-# 3. Run /genie-01 .. /genie-06 in order, feeding each prompt to Copilot or Genie.
+# 3. Run /genie-01 .. /genie-07 in order, feeding each prompt to Copilot or Genie.
 #    Each prompt READS the validated metadata and EMITS a single notebook.
 ```
 

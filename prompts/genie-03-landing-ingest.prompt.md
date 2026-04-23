@@ -1,6 +1,8 @@
-# /genie-02-landing-ingest
+# /genie-03-landing-ingest
 
-**Purpose:** Generate one Auto Loader streaming notebook **per dataset** that ingests its CSV from the landing volume into a `landing.raw_<dataset>` Delta table. Schema-on-read; no transformations.
+**Purpose:** Generate one Auto Loader streaming notebook **per dataset** that ingests its CSV from the landing volume into a `bronze.raw_<dataset>` Delta table (raw layer). Schema-on-read; no transformations.
+
+> Reads the `Data_Pipeline_Metadata_*` tables created by `/genie-02-metadata-tables` (or falls back to `metadata/datasets.yaml` for design time).
 
 **Reads:** `genie_accelerator/metadata/datasets.yaml` → `datasets[*]`
 
@@ -14,13 +16,13 @@ You are generating Databricks Auto Loader ingestion notebooks.
 INPUT: genie_accelerator/metadata/datasets.yaml
 FOR EACH dataset in {{datasets}}:
 
-  Generate notebook: notebooks/landing/01_landing_{{dataset.name}}.py
+  Generate notebook: notebooks/landing/03_landing_{{dataset.name}}.py
 
   Body:
     from pyspark.sql.functions import current_timestamp, lit, input_file_name, monotonically_increasing_id
 
     src  = "/Volumes/{{catalog}}/landing/raw_files/{{dataset.name}}/"
-    tgt  = "{{catalog}}.landing.raw_{{dataset.name}}"
+    tgt  = "{{catalog}}.bronze.raw_{{dataset.name}}"
     chk  = "/Volumes/{{catalog}}/landing/raw_files/_checkpoints/raw_{{dataset.name}}"
 
     df = (spark.readStream
@@ -55,5 +57,5 @@ CONSTRAINTS:
 ## Acceptance
 
 For each dataset:
-- `DESCRIBE TABLE EXTENDED kpi_testing.landing.raw_<dataset>` shows the four `__*__` columns.
+- `DESCRIBE TABLE EXTENDED kpi_testing.bronze.raw_<dataset>` shows the four `__*__` columns.
 - `SELECT COUNT(*)` matches the source CSV row count.

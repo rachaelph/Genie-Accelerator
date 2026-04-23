@@ -1,6 +1,6 @@
-# /genie-07-metadata-tables
+# /genie-02-metadata-tables
 
-**Purpose:** Provision the four configuration metadata tables in `kpi_testing.metadata`, mirroring the schema used by the parent ISD-Data-Accelerator so its batch engine and agent queries can be ported with minimal change. Run once per environment, after `/genie-01-deploy-catalog`.
+**Purpose:** Provision the four configuration metadata tables in `kpi_testing.metadata`, mirroring the schema used by the parent ISD-Data-Accelerator so its batch engine and agent queries can be ported with minimal change. Run once per environment, after `/genie-01-deploy-catalog` and before `/genie-03-landing-ingest`.
 
 **Reads:** `metadata/datasets.yaml` → `catalog`, `schemas.metadata`
 
@@ -78,7 +78,7 @@ ACTION: Generate ONE SQL notebook that:
 CONSTRAINTS:
   - Idempotent (CREATE TABLE IF NOT EXISTS).
   - Column names MUST match the ISD-Data-Accelerator parent verbatim.
-  - Output ONE .sql notebook named `07_metadata_tables.sql`.
+  - Output ONE .sql notebook named `02_metadata_tables.sql`.
 ```
 
 ---
