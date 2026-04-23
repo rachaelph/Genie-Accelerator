@@ -1,0 +1,22 @@
+bundle:
+  name: genie-accelerator
+
+# Files to upload into the workspace. Anything outside `sync.include`
+# (metadata/, prompts/, skills/, validate_metadata.py, README.md) stays local.
+sync:
+  include:
+    - notebooks/**
+
+workspace:
+  # Bundle artifacts land here in the workspace file tree.
+  # Notebooks become available at:
+  #   /Workspace/Users/<you>/.bundle/genie-accelerator/<target>/files/notebooks/...
+  root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      # TODO: replace with your workspace URL, e.g. https://adb-1234567890123456.7.azuredatabricks.net
+      host: https://<your-workspace>.azuredatabricks.net
