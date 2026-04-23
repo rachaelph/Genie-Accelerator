@@ -1,0 +1,179 @@
+--- # Genie Accelerator metadata contract
+# Single source of truth for catalog, schemas, and dataset definitions.
+# Every prompt under genie_accelerator/prompts/ reads from this file.
+# Validate with: python genie_accelerator/validate_metadata.py
+
+catalog: kpi_testing
+
+schemas:
+  landing:   { comment: "Raw files landed from source systems (volumes + raw tables)." }
+  bronze:    { comment: "Typed, parsed, append-only Delta tables. Minimal transformation." }
+  silver:    { comment: "Cleansed, deduplicated, conformed business entities." }
+  gold:      { comment: "Aggregated, KPI-ready tables for analytics and Genie consumption." }
+  metadata:  { comment: "Pipeline metadata, run logs, expectations history, lineage." }
+
+landing_volume:
+  name: raw_files
+  schema: landing
+  comment: "UC managed volume holding source CSVs."
+
+# -------------------------------------------------------------------
+# Datasets — each becomes: landing volume file -> bronze -> silver -> gold
+# -------------------------------------------------------------------
+datasets:
+
+  - name: housing_price
+    source_file: housing_price.csv
+    description: "California housing block-group features and median house value (target)."
+    primary_key: [block_id]            # synthetic surrogate added in bronze
+    business_domain: real_estate
+    columns:
+      - { name: block_id,    type: BIGINT, source: "_c0",         comment: "Surrogate row id from source CSV index." }
+      - { name: med_inc,     type: DOUBLE, source: MedInc,        comment: "Median income (tens of thousands USD)." }
+      - { name: house_age,   type: DOUBLE, source: HouseAge,      comment: "Median house age in block group (years)." }
+      - { name: ave_rooms,   type: DOUBLE, source: AveRooms,      comment: "Average rooms per household." }
+      - { name: ave_bedrms,  type: DOUBLE, source: AveBedrms,     comment: "Average bedrooms per household." }
+      - { name: population,  type: DOUBLE, source: Population,    comment: "Block group population." }
+      - { name: ave_occup,   type: DOUBLE, source: AveOccup,      comment: "Average household occupancy." }
+      - { name: latitude,    type: DOUBLE, source: Latitude,      comment: "Block group latitude." }
+      - { name: longitude,   type: DOUBLE, source: Longitude,     comment: "Block group longitude." }
+      - { name: median_value,type: DOUBLE, source: target,        comment: "Median house value (hundreds of thousands USD)." }
+    quality:
+      - { rule: positive_population, expr: "population > 0", severity: drop }
+      - { rule: valid_latitude,      expr: "latitude BETWEEN -90 AND 90", severity: drop }
+      - { rule: valid_longitude,     expr: "longitude BETWEEN -180 AND 180", severity: drop }
+      - { rule: positive_value,      expr: "median_value > 0", severity: warn }
+    silver_transforms:
+      - "Bucket house_age into age_band (new<10, mid<30, old>=30)."
+      - "Add value_per_room = median_value / NULLIF(ave_rooms,0)."
+      - "Add density = population / NULLIF(ave_occup,0)."
+    gold_aggregates:
+      - { name: gold_housing_by_region,
+          group_by: ["round(latitude,1) AS lat_bin", "round(longitude,1) AS lon_bin"],
+          metrics:  ["AVG(median_value) AS avg_value",
+                     "AVG(med_inc) AS avg_income",
+                     "SUM(population) AS total_population",
+                     "COUNT(*) AS block_count"] }
+
+  - name: titanic
+    source_file: titanic.csv
+    description: "Titanic passenger manifest with survival outcome."
+    primary_key: [passenger_id]
+    business_domain: historical
+    columns:
+      - { name: passenger_id, type: INT,    source: PassengerId, comment: "Unique passenger identifier." }
+      - { name: survived,     type: INT,    source: Survived,    comment: "1 if survived, else 0." }
+      - { name: pclass,       type: INT,    source: Pclass,      comment: "Ticket class (1=upper, 3=lower)." }
+      - { name: name,         type: STRING, source: Name,        comment: "Passenger full name." }
+      - { name: sex,          type: STRING, source: Sex,         comment: "Passenger sex." }
+      - { name: age,          type: DOUBLE, source: Age,         comment: "Age in years (nullable)." }
+      - { name: sib_sp,       type: INT,    source: SibSp,       comment: "Siblings/spouses aboard." }
+      - { name: parch,        type: INT,    source: Parch,       comment: "Parents/children aboard." }
+      - { name: ticket,       type: STRING, source: Ticket,      comment: "Ticket number." }
+      - { name: fare,         type: DOUBLE, source: Fare,        comment: "Ticket fare paid (GBP)." }
+      - { name: cabin,        type: STRING, source: Cabin,       comment: "Cabin assignment (nullable)." }
+      - { name: embarked,     type: STRING, source: Embarked,    comment: "Port of embarkation (C/Q/S)." }
+    quality:
+      - { rule: valid_survival, expr: "survived IN (0,1)",          severity: fail }
+      - { rule: valid_pclass,   expr: "pclass IN (1,2,3)",          severity: drop }
+      - { rule: nonneg_fare,    expr: "fare IS NULL OR fare >= 0",  severity: drop }
+      - { rule: valid_age,      expr: "age IS NULL OR age BETWEEN 0 AND 120", severity: warn }
+    silver_transforms:
+      - "Bucket age into age_group (child<13, teen<20, adult<60, senior>=60)."
+      - "Add family_size = sib_sp + parch + 1."
+      - "Add is_alone = (family_size = 1)."
+      - "Extract title from name (Mr/Mrs/Miss/Master/Other)."
+    gold_aggregates:
+      - { name: gold_titanic_survival_by_class_sex,
+          group_by: ["pclass", "sex"],
+          metrics:  ["COUNT(*) AS passenger_count",
+                     "SUM(survived) AS survivors",
+                     "AVG(survived) AS survival_rate",
+                     "AVG(fare) AS avg_fare"] }
+
+  - name: nyc_taxi
+    source_file: nyc_taxi.csv
+    description: "NYC taxi trip records with pickup/dropoff time and geo features."
+    primary_key: [trip_id]
+    business_domain: transportation
+    columns:
+      - { name: trip_id,            type: BIGINT, source: "__row_id__",     comment: "Synthetic surrogate trip identifier." }
+      - { name: distance,           type: DOUBLE, source: distance,         comment: "Trip distance (miles)." }
+      - { name: dropoff_latitude,   type: DOUBLE, source: dropoff_latitude, comment: "Dropoff latitude." }
+      - { name: dropoff_longitude,  type: DOUBLE, source: dropoff_longitude,comment: "Dropoff longitude." }
+      - { name: passengers,         type: INT,    source: passengers,       comment: "Passenger count." }
+      - { name: pickup_latitude,    type: DOUBLE, source: pickup_latitude,  comment: "Pickup latitude." }
+      - { name: pickup_longitude,   type: DOUBLE, source: pickup_longitude, comment: "Pickup longitude." }
+      - { name: store_forward,      type: INT,    source: store_forward,    comment: "Store-and-forward flag." }
+      - { name: vendor,             type: INT,    source: vendor,           comment: "Vendor id." }
+      - { name: pickup_weekday,     type: INT,    source: pickup_weekday,   comment: "Pickup day-of-week (0=Mon)." }
+      - { name: pickup_month,       type: INT,    source: pickup_month,     comment: "Pickup month (1-12)." }
+      - { name: pickup_monthday,    type: INT,    source: pickup_monthday,  comment: "Pickup day-of-month." }
+      - { name: pickup_hour,        type: INT,    source: pickup_hour,      comment: "Pickup hour (0-23)." }
+      - { name: pickup_minute,      type: INT,    source: pickup_minute,    comment: "Pickup minute." }
+      - { name: pickup_second,      type: INT,    source: pickup_second,    comment: "Pickup second." }
+      - { name: dropoff_weekday,    type: INT,    source: dropoff_weekday,  comment: "Dropoff day-of-week (0=Mon)." }
+      - { name: dropoff_month,      type: INT,    source: dropoff_month,    comment: "Dropoff month (1-12)." }
+      - { name: dropoff_monthday,   type: INT,    source: dropoff_monthday, comment: "Dropoff day-of-month." }
+      - { name: dropoff_hour,       type: INT,    source: dropoff_hour,     comment: "Dropoff hour (0-23)." }
+      - { name: dropoff_minute,     type: INT,    source: dropoff_minute,   comment: "Dropoff minute." }
+      - { name: dropoff_second,     type: INT,    source: dropoff_second,   comment: "Dropoff second." }
+    quality:
+      - { rule: positive_distance,  expr: "distance > 0",                 severity: drop }
+      - { rule: valid_passengers,   expr: "passengers BETWEEN 1 AND 9",   severity: drop }
+      - { rule: valid_pickup_geo,   expr: "pickup_latitude BETWEEN -90 AND 90 AND pickup_longitude BETWEEN -180 AND 180",  severity: drop }
+      - { rule: valid_dropoff_geo,  expr: "dropoff_latitude BETWEEN -90 AND 90 AND dropoff_longitude BETWEEN -180 AND 180",severity: drop }
+      - { rule: valid_hour,         expr: "pickup_hour BETWEEN 0 AND 23", severity: drop }
+    silver_transforms:
+      - "Add city_tag = 'NYC'."
+      - "Bucket pickup_hour into time_of_day (night<6, morning<12, afternoon<18, evening<24)."
+      - "Add is_weekend = pickup_weekday IN (5,6)."
+      - "Compute haversine_miles from pickup/dropoff lat/lon."
+    gold_aggregates:
+      - { name: gold_nyc_taxi_demand_by_hour,
+          group_by: ["pickup_weekday", "pickup_hour"],
+          metrics:  ["COUNT(*) AS trip_count",
+                     "AVG(distance) AS avg_distance",
+                     "AVG(passengers) AS avg_passengers"] }
+
+  - name: london_taxi
+    source_file: london_taxi.csv
+    description: "London taxi trip records (same schema as NYC)."
+    primary_key: [trip_id]
+    business_domain: transportation
+    same_schema_as: nyc_taxi          # validator enforces column equivalence
+    silver_transforms:
+      - "Add city_tag = 'LONDON'."
+      - "Bucket pickup_hour into time_of_day (night<6, morning<12, afternoon<18, evening<24)."
+      - "Add is_weekend = pickup_weekday IN (5,6)."
+      - "Compute haversine_km from pickup/dropoff lat/lon."
+    gold_aggregates:
+      - { name: gold_london_taxi_demand_by_hour,
+          group_by: ["pickup_weekday", "pickup_hour"],
+          metrics:  ["COUNT(*) AS trip_count",
+                     "AVG(distance) AS avg_distance",
+                     "AVG(passengers) AS avg_passengers"] }
+
+# -------------------------------------------------------------------
+# Cross-dataset gold tables (assembled from multiple silvers)
+# -------------------------------------------------------------------
+cross_dataset_gold:
+  - name: gold_global_taxi_demand
+    sources: [silver_nyc_taxi, silver_london_taxi]
+    description: "Unified taxi demand across cities for cross-city Genie analytics."
+    columns_from_silver: ["city_tag", "pickup_weekday", "pickup_hour", "distance", "passengers"]
+    aggregates:
+      group_by: ["city_tag", "pickup_weekday", "pickup_hour"]
+      metrics:
+        - "COUNT(*) AS trip_count"
+        - "AVG(distance) AS avg_distance"
+        - "SUM(passengers) AS total_passengers"
+
+# -------------------------------------------------------------------
+# Genie consumption views (business_metrics-style; in 'gold' schema here)
+# -------------------------------------------------------------------
+genie_views:
+  - { name: vw_housing_value_by_region,    base: gold_housing_by_region,             description: "Average home value and income by lat/lon bin." }
+  - { name: vw_titanic_survival_kpis,      base: gold_titanic_survival_by_class_sex, description: "Survival rate by class and sex." }
+  - { name: vw_taxi_demand_heatmap,        base: gold_global_taxi_demand,            description: "Trip demand by city, weekday, hour." }
+  - { name: vw_taxi_city_comparison,       base: gold_global_taxi_demand,            description: "Side-by-side NYC vs London demand metrics." }
