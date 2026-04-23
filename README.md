@@ -21,6 +21,7 @@ Metadata-driven scaffold mirroring the parent ISD Data Accelerator pattern, but 
 | 4. Silver DLT     | [genie-04-silver-dlt](prompts/genie-04-silver-dlt.prompt.md)         | SCD1 dedup + transforms → `silver.silver_*` |
 | 5. Gold DLT       | [genie-05-gold-dlt](prompts/genie-05-gold-dlt.prompt.md)             | Per-dataset + cross-dataset aggregates → `gold.gold_*` |
 | 6. Genie views    | [genie-06-genie-views](prompts/genie-06-genie-views.prompt.md)       | Commented `gold.vw_*` views for the Genie space |
+| 7. Metadata tables | [genie-07-metadata-tables](prompts/genie-07-metadata-tables.prompt.md) | 4 config tables in `metadata.*` mirroring the ISD parent (Datastore_Configuration + Orchestration / Primary / Advanced Configuration) |
 
 ## Datasets in scope (from `sample_data/`, excluding `apartments-train.csv`)
 
