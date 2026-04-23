@@ -15,6 +15,7 @@ Metadata-driven scaffold mirroring the parent ISD Data Accelerator pattern, but 
 
 | Stage | Command | Output |
 |---|---|---|
+| 0. Add dataset (optional) | [genie-00-add-dataset](prompts/genie-00-add-dataset.prompt.md)          | Appends a new block to `metadata/datasets.yaml` by inferring from a CSV |
 | 1. Deploy catalog   | [genie-01-deploy-catalog](prompts/genie-01-deploy-catalog.prompt.md)     | UC catalog `kpi_testing`, 5 schemas, landing volume |
 | 2. Metadata tables  | [genie-02-metadata-tables](prompts/genie-02-metadata-tables.prompt.md)   | 4 config tables in `metadata.*` (Datastore + Orchestration / Primary / Advanced) |
 | 3. Land CSVs        | [genie-03-landing-ingest](prompts/genie-03-landing-ingest.prompt.md)     | Auto Loader notebook per dataset → `bronze.raw_*` (raw data) |
@@ -58,7 +59,7 @@ python genie_accelerator/validate_metadata.py
 
 ## Adding a new dataset
 
-1. Drop `<file>.csv` into `/Volumes/kpi_testing/landing/raw_files/<dataset>/`.
-2. Add a `datasets:` entry in `metadata/datasets.yaml`.
-3. `python genie_accelerator/validate_metadata.py`
+1. Run `/genie-00-add-dataset` with `csv_path: <path to the csv>` — it infers the YAML block for you.
+3. `python validate_metadata.py`
+4. Re-run prompts 03 → 07tor/validate_metadata.py`
 4. Re-run prompts 02 → 06.
